@@ -1,0 +1,50 @@
+🎬 Veo 3 Prompt Builder Checklist
+
+• Scene Description:
+Little Red Riding Hood dashes down a forest trail, glancing over her shoulder as the Big Bad Wolf charges after her.
+
+• Setting:
+Dense, twilight forest with a narrow dirt trail winding through tall, shadowy trees.
+
+• Shot Type:
+Tracking shot with a slight handheld feel, running backward as she runs toward the camera.
+
+• Year:
+Fairy tale timeless — but with a slight modern twist (e.g., 2020s urban fairy tale vibe).
+
+• Character Description:
+Little Red Riding Hood — a teen in a red hoodie and sneakers, dirt on her face, eyes wide with fear and sarcasm. The wolf is massive, dark-furred, with glowing eyes and snarling teeth.
+
+• Dialogue:
+"This damn wolf is trying to eat me." (spoken to camera, breathless and sarcastic)
+
+• Lighting:
+Dusky blue light filtering through trees, with sharp shadows and a faint orange glow behind her from the setting sun.
+
+• Color Palette:
+Deep forest greens, muted browns, and pops of red and grey.
+
+• Sound:
+Breathing, crunching leaves, wolf growls, wind rushing past, her voice cutting through.
+
+• Mood:
+Urgent, slightly comedic, dark fairy tale.
+
+• Visual Style:
+Cinematic realism with a touch of gritty fantasy.
+
+• Effects:
+Motion blur from running, light rays through trees, slight camera shake.
+
+Would you like to adjust anything in the list before I turn this into the final cinematic Veo 3 prompt?
+
+You said:
+no
+
+VEO 3 Prompt Builder said:
+
+Perfect — here’s your final Veo 3 video prompt, optimized for an 8-second cinematic scene:
+
+Veo 3 Prompt:
+
+In a dusky, shadow-laced forest, Little Red Riding Hood sprints down a narrow dirt trail, her red hoodie flaring behind her as she runs straight toward the camera. The shot tracks her movement with a slight handheld feel, capturing her panicked breath and darting eyes. Behind her, the towering Big Bad Wolf barrels through the underbrush — a dark, snarling blur with glowing eyes and snapping jaws. As Red glances directly into the lens, breathless and defiant, she blurts, "This damn wolf is trying to eat me." Twilight blue light filters through the canopy above, casting long shadows across the forest floor. A faint orange glow from the setting sun backlights the chaos, while leaves crunch and wind rushes past. The atmosphere blends urgency with fairy tale grit — cinematic realism with motion blur, streaks of light through trees, and a touch of dark humor. The mood is intense yet sly, grounded in a modern mythic style.
