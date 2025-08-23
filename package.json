@@ -1,6 +1,6 @@
 {
   "name": "prompt-archiver",
-  "version": "1.0.0",
+  "version": "1.2.4",
   "description": "A desktop application for storing and organizing AI prompts with their outputs",
   "main": "src/main.js",
   "scripts": {

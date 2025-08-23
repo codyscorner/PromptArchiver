@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron');
 const path = require('path');
 const fs = require('fs').promises;
 const Store = require('electron-store');
@@ -10,6 +10,7 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
+    title: `Prompt Archiver (v${app.getVersion()})`,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -26,6 +27,111 @@ function createWindow() {
   } else {
     mainWindow.loadFile(path.join(__dirname, '../build/index.html'));
   }
+
+  // Set up application menu
+  setupApplicationMenu();
+
+  // Ensure title persists after page load
+  mainWindow.webContents.on('did-finish-load', () => {
+    mainWindow.setTitle(`Prompt Archiver (v${app.getVersion()})`);
+  });
+}
+
+function setupApplicationMenu() {
+  const template = [
+    {
+      label: 'File',
+      submenu: [
+        {
+          label: 'New Prompt',
+          accelerator: 'CmdOrCtrl+N',
+          click: () => {
+            mainWindow.webContents.send('open-add-dialog');
+          }
+        },
+        { type: 'separator' },
+        {
+          label: 'Settings',
+          accelerator: 'CmdOrCtrl+,',
+          click: () => {
+            mainWindow.webContents.send('open-settings');
+          }
+        },
+        { type: 'separator' },
+        {
+          label: 'Exit',
+          accelerator: process.platform === 'darwin' ? 'Cmd+Q' : 'Ctrl+Q',
+          click: () => {
+            app.quit();
+          }
+        }
+      ]
+    },
+    {
+      label: 'Edit',
+      submenu: [
+        { label: 'Undo', accelerator: 'CmdOrCtrl+Z', role: 'undo' },
+        { label: 'Redo', accelerator: 'Shift+CmdOrCtrl+Z', role: 'redo' },
+        { type: 'separator' },
+        { label: 'Cut', accelerator: 'CmdOrCtrl+X', role: 'cut' },
+        { label: 'Copy', accelerator: 'CmdOrCtrl+C', role: 'copy' },
+        { label: 'Paste', accelerator: 'CmdOrCtrl+V', role: 'paste' }
+      ]
+    },
+    {
+      label: 'View',
+      submenu: [
+        { label: 'Reload', accelerator: 'CmdOrCtrl+R', role: 'reload' },
+        { label: 'Force Reload', accelerator: 'CmdOrCtrl+Shift+R', role: 'forceReload' },
+        { label: 'Toggle Developer Tools', accelerator: 'F12', role: 'toggleDevTools' },
+        { type: 'separator' },
+        { label: 'Actual Size', accelerator: 'CmdOrCtrl+0', role: 'resetZoom' },
+        { label: 'Zoom In', accelerator: 'CmdOrCtrl+Plus', role: 'zoomIn' },
+        { label: 'Zoom Out', accelerator: 'CmdOrCtrl+-', role: 'zoomOut' },
+        { type: 'separator' },
+        { label: 'Toggle Fullscreen', accelerator: 'F11', role: 'togglefullscreen' }
+      ]
+    },
+    {
+      label: 'Window',
+      submenu: [
+        { label: 'Minimize', accelerator: 'CmdOrCtrl+M', role: 'minimize' },
+        { label: 'Close', accelerator: 'CmdOrCtrl+W', role: 'close' }
+      ]
+    },
+    {
+      label: 'Help',
+      submenu: [
+        {
+          label: 'About Prompt Archiver',
+          click: () => {
+            dialog.showMessageBox(mainWindow, {
+              type: 'info',
+              title: 'About Prompt Archiver',
+              message: `Prompt Archiver v${app.getVersion()}`,
+              detail: 'A desktop application for storing, organizing, and viewing AI prompts alongside their generated outputs (text, images, or videos).\n\nFeatures:\n• Local-first storage with no cloud dependency\n• Automatic organization by content type\n• Built-in viewers for text, images, and videos\n• Search and filter capabilities\n• Export and backup functionality',
+              buttons: ['OK']
+            });
+          }
+        },
+        {
+          label: 'Usage Guide',
+          click: () => {
+            dialog.showMessageBox(mainWindow, {
+              type: 'info',
+              title: 'How to Use Prompt Archiver',
+              message: 'Usage Guide',
+              detail: 'Adding Prompts:\n1. Click the "+" button to open the Add Prompt dialog\n2. Enter your prompt text\n3. Select content type (text, image, or video)\n4. Add tags for organization (optional)\n5. Attach output files (optional)\n6. Click "Save Prompt"\n\nBrowsing Prompts:\n• Use the sidebar to browse all saved prompts\n• Filter by type using the dropdown\n• Search by prompt content or tags\n• Click on any prompt to view its details\n\nExporting:\n1. Select prompts using checkboxes in sidebar\n2. Click "Export Selected" to create ZIP backup\n3. Choose the export location',
+              buttons: ['OK']
+            });
+          }
+        }
+      ]
+    }
+  ];
+
+  const menu = Menu.buildFromTemplate(template);
+  Menu.setApplicationMenu(menu);
 }
 
 app.whenReady().then(createWindow);

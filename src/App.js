@@ -25,6 +25,7 @@ function App() {
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
+  const [appVersion, setAppVersion] = useState('');
 
   useEffect(() => {
     initializeApp();
@@ -38,6 +39,7 @@ function App() {
     try {
       const config = await window.electronAPI.getAppConfig();
       setArchivePath(config.archivePath || '');
+      setAppVersion(config.version || '');
       
       if (config.archivePath) {
         await window.electronAPI.ensureArchiveStructure(config.archivePath);
