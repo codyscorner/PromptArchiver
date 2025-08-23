@@ -20,7 +20,7 @@ import {
   Select,
   Alert
 } from '@mui/material';
-import { MoreVert as MoreVertIcon, Edit as EditIcon, EditNote as EditNoteIcon } from '@mui/icons-material';
+import { MoreVert as MoreVertIcon, Edit as EditIcon, EditNote as EditNoteIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import MediaViewer from './MediaViewer';
 import EditPromptDialog from './EditPromptDialog';
 
@@ -31,6 +31,7 @@ const ContentArea = ({ selectedPrompt, archivePath, onPromptUpdated, showSnackba
   const [changeTypeOpen, setChangeTypeOpen] = useState(false);
   const [newType, setNewType] = useState('');
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
     setTabValue(0);
@@ -39,6 +40,7 @@ const ContentArea = ({ selectedPrompt, archivePath, onPromptUpdated, showSnackba
     setChangeTypeOpen(false);
     setNewType('');
     setEditDialogOpen(false);
+    setDeleteDialogOpen(false);
   }, [selectedPrompt]);
 
   const handleTabChange = (event, newValue) => {
@@ -111,6 +113,29 @@ const ContentArea = ({ selectedPrompt, archivePath, onPromptUpdated, showSnackba
     }
 
     setChangeTypeOpen(false);
+  };
+
+  const handleDeleteClick = () => {
+    setDeleteDialogOpen(true);
+    setMenuAnchor(null);
+  };
+
+  const handleDeleteConfirm = async () => {
+    try {
+      const result = await window.electronAPI.deletePrompt(selectedPrompt.path);
+
+      if (result.success) {
+        showSnackbar(result.message, 'success');
+        onPromptUpdated(); // Refresh the prompt list
+        setDeleteDialogOpen(false);
+      } else {
+        showSnackbar('Error deleting prompt: ' + result.error, 'error');
+      }
+    } catch (error) {
+      showSnackbar('Error deleting prompt: ' + error.message, 'error');
+    }
+
+    setDeleteDialogOpen(false);
   };
 
   if (!selectedPrompt) {
@@ -300,6 +325,10 @@ const ContentArea = ({ selectedPrompt, archivePath, onPromptUpdated, showSnackba
             <EditIcon sx={{ mr: 1 }} />
             Change Type
           </MenuItem>
+          <MenuItem onClick={handleDeleteClick} sx={{ color: 'error.main' }}>
+            <DeleteIcon sx={{ mr: 1 }} />
+            Delete Prompt
+          </MenuItem>
         </Menu>
 
         <Dialog open={changeTypeOpen} onClose={() => setChangeTypeOpen(false)}>
@@ -331,6 +360,42 @@ const ContentArea = ({ selectedPrompt, archivePath, onPromptUpdated, showSnackba
               disabled={!newType || newType === selectedPrompt.type}
             >
               Change Type
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+          <DialogTitle>Delete Prompt</DialogTitle>
+          <DialogContent>
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              This action cannot be undone. All files and data for this prompt will be permanently deleted.
+            </Alert>
+            <Typography>
+              Are you sure you want to delete this prompt?
+            </Typography>
+            <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
+              <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
+                {selectedPrompt?.type?.toUpperCase()} Prompt
+              </Typography>
+              <Typography variant="body2" sx={{ 
+                overflow: 'hidden', 
+                textOverflow: 'ellipsis', 
+                display: '-webkit-box',
+                WebkitLineClamp: 3,
+                WebkitBoxOrient: 'vertical'
+              }}>
+                {selectedPrompt?.prompt}
+              </Typography>
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+            <Button 
+              onClick={handleDeleteConfirm} 
+              variant="contained" 
+              color="error"
+            >
+              Delete Permanently
             </Button>
           </DialogActions>
         </Dialog>

@@ -9,8 +9,19 @@ import {
   Chip,
   Box,
   Typography,
-  Divider
+  Divider,
+  IconButton,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemSecondaryAction,
+  Alert
 } from '@mui/material';
+import { 
+  Delete as DeleteIcon,
+  AttachFile as AttachFileIcon,
+  Refresh as RefreshIcon
+} from '@mui/icons-material';
 
 const EditPromptDialog = ({ open, onClose, onSave, prompt: selectedPrompt }) => {
   const [prompt, setPrompt] = useState('');
@@ -22,6 +33,8 @@ const EditPromptDialog = ({ open, onClose, onSave, prompt: selectedPrompt }) => 
   const [baseModel, setBaseModel] = useState('');
   const [negativePrompt, setNegativePrompt] = useState('');
   const [saving, setSaving] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [currentOutputFiles, setCurrentOutputFiles] = useState([]);
 
   useEffect(() => {
     if (selectedPrompt) {
@@ -32,6 +45,8 @@ const EditPromptDialog = ({ open, onClose, onSave, prompt: selectedPrompt }) => 
       setModelType(selectedPrompt.modelType || '');
       setBaseModel(selectedPrompt.baseModel || '');
       setNegativePrompt(selectedPrompt.negativePrompt || '');
+      setCurrentOutputFiles(selectedPrompt.outputFiles || []);
+      setSelectedFiles([]);
       setTagInput('');
     }
   }, [selectedPrompt]);
@@ -56,6 +71,25 @@ const EditPromptDialog = ({ open, onClose, onSave, prompt: selectedPrompt }) => 
     setTags(tags.filter(tag => tag !== tagToRemove));
   };
 
+  const handleSelectFiles = async () => {
+    try {
+      const filePaths = await window.electronAPI.selectFiles();
+      if (filePaths && filePaths.length > 0) {
+        setSelectedFiles(filePaths);
+      }
+    } catch (error) {
+      console.error('Error selecting files:', error);
+    }
+  };
+
+  const handleRemoveFile = (index) => {
+    setSelectedFiles(selectedFiles.filter((_, i) => i !== index));
+  };
+
+  const getFileName = (filePath) => {
+    return filePath.split('\\').pop().split('/').pop();
+  };
+
   const handleSave = async () => {
     if (!prompt.trim()) {
       return;
@@ -75,6 +109,22 @@ const EditPromptDialog = ({ open, onClose, onSave, prompt: selectedPrompt }) => 
       };
 
       await onSave(promptData);
+      
+      // If files were selected, replace the output files
+      if (selectedFiles.length > 0) {
+        try {
+          const result = await window.electronAPI.replacePromptFiles({
+            promptPath: selectedPrompt.path,
+            newFiles: selectedFiles
+          });
+          
+          if (!result.success) {
+            console.error('Error replacing files:', result.error);
+          }
+        } catch (error) {
+          console.error('Error replacing files:', error);
+        }
+      }
     } catch (error) {
       console.error('Error saving prompt:', error);
     } finally {
@@ -179,6 +229,73 @@ const EditPromptDialog = ({ open, onClose, onSave, prompt: selectedPrompt }) => 
                   />
                 ))}
               </Box>
+            )}
+          </Box>
+
+          <Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+              <Typography variant="subtitle1" sx={{ flexGrow: 1 }}>
+                Output Files
+              </Typography>
+              <Button
+                variant="outlined"
+                startIcon={<RefreshIcon />}
+                onClick={handleSelectFiles}
+                size="small"
+              >
+                Replace Files
+              </Button>
+            </Box>
+
+            {selectedFiles.length > 0 && (
+              <Box sx={{ mb: 2 }}>
+                <Alert severity="info" sx={{ mb: 2 }}>
+                  New files selected. These will replace all existing output files when you save.
+                </Alert>
+                <List dense>
+                  {selectedFiles.map((filePath, index) => (
+                    <ListItem key={index} divider>
+                      <ListItemText
+                        primary={getFileName(filePath)}
+                        secondary={filePath}
+                      />
+                      <ListItemSecondaryAction>
+                        <IconButton
+                          edge="end"
+                          onClick={() => handleRemoveFile(index)}
+                          size="small"
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </ListItemSecondaryAction>
+                    </ListItem>
+                  ))}
+                </List>
+              </Box>
+            )}
+
+            {currentOutputFiles.length > 0 && selectedFiles.length === 0 && (
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                  Current files ({currentOutputFiles.length}):
+                </Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                  {currentOutputFiles.map((file, index) => (
+                    <Chip
+                      key={index}
+                      label={file}
+                      size="small"
+                      variant="outlined"
+                    />
+                  ))}
+                </Box>
+              </Box>
+            )}
+
+            {currentOutputFiles.length === 0 && selectedFiles.length === 0 && (
+              <Alert severity="info">
+                No output files. Click "Replace Files" to add some.
+              </Alert>
             )}
           </Box>
         </Box>

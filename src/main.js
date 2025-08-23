@@ -401,3 +401,53 @@ ipcMain.handle('update-prompt', async (event, { promptPath, promptData }) => {
     return { success: false, error: error.message };
   }
 });
+
+ipcMain.handle('delete-prompt', async (event, promptPath) => {
+  try {
+    // Delete the entire prompt folder
+    await fs.rm(promptPath, { recursive: true, force: true });
+    return { success: true, message: 'Prompt deleted successfully' };
+  } catch (error) {
+    console.error('Error deleting prompt:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('replace-prompt-files', async (event, { promptPath, newFiles }) => {
+  try {
+    // Get list of existing output files to remove
+    const files = await fs.readdir(promptPath);
+    const existingOutputFiles = files.filter(f => 
+      f !== 'prompt.txt' && 
+      f !== 'metadata.json' && 
+      f !== 'negative_prompt.txt'
+    );
+    
+    // Remove existing output files
+    for (const file of existingOutputFiles) {
+      try {
+        await fs.unlink(path.join(promptPath, file));
+      } catch (error) {
+        console.error(`Error removing file ${file}:`, error);
+      }
+    }
+    
+    // Copy new files
+    if (newFiles && newFiles.length > 0) {
+      for (const filePath of newFiles) {
+        try {
+          const fileName = path.basename(filePath);
+          const destPath = path.join(promptPath, fileName);
+          await fs.copyFile(filePath, destPath);
+        } catch (fileError) {
+          console.error(`Error copying file ${filePath}:`, fileError);
+        }
+      }
+    }
+    
+    return { success: true, message: 'Files replaced successfully' };
+  } catch (error) {
+    console.error('Error replacing prompt files:', error);
+    return { success: false, error: error.message };
+  }
+});

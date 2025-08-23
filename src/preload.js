@@ -12,5 +12,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   exportPrompts: (data) => ipcRenderer.invoke('export-prompts', data),
   selectExportLocation: () => ipcRenderer.invoke('select-export-location'),
   changePromptType: (data) => ipcRenderer.invoke('change-prompt-type', data),
-  updatePrompt: (data) => ipcRenderer.invoke('update-prompt', data)
+  updatePrompt: (data) => ipcRenderer.invoke('update-prompt', data),
+  deletePrompt: (promptPath) => ipcRenderer.invoke('delete-prompt', promptPath),
+  replacePromptFiles: (data) => ipcRenderer.invoke('replace-prompt-files', data)
 });

@@ -26,7 +26,7 @@
     "concurrently": "^8.2.2",
     "cross-env": "^10.0.0",
     "electron": "^37.3.1",
-    "electron-builder": "^24.6.4",
+    "electron-builder": "^24.13.3",
     "wait-on": "^7.2.0"
   },
   "dependencies": {
@@ -42,7 +42,7 @@
   },
   "homepage": "./",
   "build": {
-    "appId": "com.promptarchiver.app",
+    "appId": "com.codyscorner.promptarchiver",
     "productName": "Prompt Archiver",
     "directories": {
       "output": "dist"
@@ -51,11 +51,43 @@
       "build/**/*",
       "src/main.js",
       "src/preload.js",
-      "node_modules/**/*"
+      "node_modules/**/*",
+      "!node_modules/.cache/**/*"
     ],
+    "extraMetadata": {
+      "main": "src/main.js"
+    },
     "win": {
-      "target": "nsis",
-      "icon": "assets/icon.ico"
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ]
+    },
+    "forceCodeSigning": false,
+    "mac": {
+      "target": "dmg",
+      "icon": "assets/icon.icns"
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "assets/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
     }
   },
   "browserslist": {
