@@ -20,7 +20,7 @@ import {
   Select,
   Alert
 } from '@mui/material';
-import { MoreVert as MoreVertIcon, Edit as EditIcon, EditNote as EditNoteIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { MoreVert as MoreVertIcon, Edit as EditIcon, EditNote as EditNoteIcon, Delete as DeleteIcon, ContentCopy as ContentCopyIcon } from '@mui/icons-material';
 import MediaViewer from './MediaViewer';
 import EditPromptDialog from './EditPromptDialog';
 
@@ -138,6 +138,24 @@ const ContentArea = ({ selectedPrompt, archivePath, onPromptUpdated, showSnackba
     setDeleteDialogOpen(false);
   };
 
+  const handleCopyPrompt = async () => {
+    try {
+      await navigator.clipboard.writeText(selectedPrompt.prompt);
+      showSnackbar('Prompt copied to clipboard!', 'success');
+    } catch (error) {
+      showSnackbar('Failed to copy prompt', 'error');
+    }
+  };
+
+  const handleCopyNegativePrompt = async () => {
+    try {
+      await navigator.clipboard.writeText(selectedPrompt.negativePrompt);
+      showSnackbar('Negative prompt copied to clipboard!', 'success');
+    } catch (error) {
+      showSnackbar('Failed to copy negative prompt', 'error');
+    }
+  };
+
   if (!selectedPrompt) {
     return (
       <Box className="content-area">
@@ -237,9 +255,19 @@ const ContentArea = ({ selectedPrompt, archivePath, onPromptUpdated, showSnackba
               </Box>
             )}
 
-            <Typography variant="h6" gutterBottom>
-              Prompt
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+              <Typography variant="h6">
+                Prompt
+              </Typography>
+              <IconButton 
+                onClick={handleCopyPrompt} 
+                size="small" 
+                title="Copy prompt to clipboard"
+                sx={{ ml: 1 }}
+              >
+                <ContentCopyIcon fontSize="small" />
+              </IconButton>
+            </Box>
             <Paper
               variant="outlined"
               sx={{
@@ -258,9 +286,19 @@ const ContentArea = ({ selectedPrompt, archivePath, onPromptUpdated, showSnackba
             {/* Negative Prompt */}
             {selectedPrompt.hasNegativePrompt && selectedPrompt.negativePrompt && (
               <Box sx={{ mt: 2 }}>
-                <Typography variant="h6" gutterBottom>
-                  Negative Prompt
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography variant="h6">
+                    Negative Prompt
+                  </Typography>
+                  <IconButton 
+                    onClick={handleCopyNegativePrompt} 
+                    size="small" 
+                    title="Copy negative prompt to clipboard"
+                    sx={{ ml: 1 }}
+                  >
+                    <ContentCopyIcon fontSize="small" />
+                  </IconButton>
+                </Box>
                 <Paper
                   variant="outlined"
                   sx={{
