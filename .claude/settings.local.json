@@ -11,7 +11,8 @@
       "Bash(npm run build:*)",
       "Bash(npm run:*)",
       "Bash(npx electron-builder:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []

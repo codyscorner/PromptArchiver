@@ -24,6 +24,7 @@ function App() {
   const [archivePath, setArchivePath] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
+  const [ratingFilter, setRatingFilter] = useState('all');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
   const [appVersion, setAppVersion] = useState('');
 
@@ -33,7 +34,7 @@ function App() {
 
   useEffect(() => {
     filterPrompts();
-  }, [prompts, searchTerm, typeFilter]);
+  }, [prompts, searchTerm, typeFilter, ratingFilter]);
 
   const initializeApp = async () => {
     try {
@@ -77,6 +78,15 @@ function App() {
       filtered = filtered.filter(prompt => prompt.type === typeFilter);
     }
 
+    if (ratingFilter !== 'all') {
+      const minRating = ratingFilter;
+      if (minRating === 0) {
+        filtered = filtered.filter(prompt => !prompt.rating || prompt.rating === 0);
+      } else {
+        filtered = filtered.filter(prompt => (prompt.rating || 0) >= minRating);
+      }
+    }
+
     setFilteredPrompts(filtered);
   };
 
@@ -110,6 +120,18 @@ function App() {
     await window.electronAPI.ensureArchiveStructure(newPath);
     await loadPrompts(newPath);
     showSnackbar('Archive path updated successfully!', 'success');
+  };
+
+  const handlePromptUpdated = async () => {
+    await loadPrompts(archivePath);
+    // Update selectedPrompt if it's currently selected
+    if (selectedPrompt) {
+      const updatedPrompts = await window.electronAPI.loadPrompts(archivePath);
+      const updatedSelectedPrompt = updatedPrompts.find(p => p.folderName === selectedPrompt.folderName);
+      if (updatedSelectedPrompt) {
+        setSelectedPrompt(updatedSelectedPrompt);
+      }
+    }
   };
 
   const showSnackbar = (message, severity = 'info') => {
@@ -171,6 +193,8 @@ function App() {
           onSearchChange={setSearchTerm}
           typeFilter={typeFilter}
           onTypeFilterChange={setTypeFilter}
+          ratingFilter={ratingFilter}
+          onRatingFilterChange={setRatingFilter}
           onOpenSettings={() => setSettingsOpen(true)}
           onExportSelected={handleExportPrompts}
         />
@@ -178,7 +202,7 @@ function App() {
         <ContentArea
           selectedPrompt={selectedPrompt}
           archivePath={archivePath}
-          onPromptUpdated={() => loadPrompts(archivePath)}
+          onPromptUpdated={handlePromptUpdated}
           showSnackbar={showSnackbar}
         />
       </Box>

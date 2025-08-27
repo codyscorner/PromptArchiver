@@ -23,6 +23,7 @@ import {
 import { MoreVert as MoreVertIcon, Edit as EditIcon, EditNote as EditNoteIcon, Delete as DeleteIcon, ContentCopy as ContentCopyIcon } from '@mui/icons-material';
 import MediaViewer from './MediaViewer';
 import EditPromptDialog from './EditPromptDialog';
+import StarRating from './StarRating';
 
 const ContentArea = ({ selectedPrompt, archivePath, onPromptUpdated, showSnackbar }) => {
   const [tabValue, setTabValue] = useState(0);
@@ -156,6 +157,24 @@ const ContentArea = ({ selectedPrompt, archivePath, onPromptUpdated, showSnackba
     }
   };
 
+  const handleRatingChange = async (newRating) => {
+    try {
+      const result = await window.electronAPI.updatePromptRating({
+        promptPath: selectedPrompt.path,
+        rating: newRating
+      });
+
+      if (result.success) {
+        showSnackbar('Rating updated!', 'success');
+        onPromptUpdated(); // Refresh the prompt list
+      } else {
+        showSnackbar('Error updating rating: ' + result.error, 'error');
+      }
+    } catch (error) {
+      showSnackbar('Error updating rating: ' + error.message, 'error');
+    }
+  };
+
   if (!selectedPrompt) {
     return (
       <Box className="content-area">
@@ -190,6 +209,17 @@ const ContentArea = ({ selectedPrompt, archivePath, onPromptUpdated, showSnackba
               <IconButton onClick={handleMenuOpen} size="small">
                 <MoreVertIcon />
               </IconButton>
+            </Box>
+
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
+                Rating:
+              </Typography>
+              <StarRating 
+                rating={selectedPrompt.rating || 0} 
+                onRatingChange={handleRatingChange}
+                size="medium" 
+              />
             </Box>
 
             {/* AI Source and Model Information */}

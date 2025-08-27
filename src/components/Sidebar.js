@@ -20,6 +20,7 @@ import {
   Settings as SettingsIcon,
   FileDownload as ExportIcon
 } from '@mui/icons-material';
+import StarRating from './StarRating';
 
 const Sidebar = ({
   prompts,
@@ -29,6 +30,8 @@ const Sidebar = ({
   onSearchChange,
   typeFilter,
   onTypeFilterChange,
+  ratingFilter,
+  onRatingFilterChange,
   onOpenSettings,
   onExportSelected
 }) => {
@@ -88,7 +91,7 @@ const Sidebar = ({
           sx={{ mb: 2 }}
         />
         
-        <FormControl fullWidth size="small">
+        <FormControl fullWidth size="small" sx={{ mb: 2 }}>
           <InputLabel>Type</InputLabel>
           <Select
             value={typeFilter}
@@ -99,6 +102,33 @@ const Sidebar = ({
             <MenuItem value="text">Text</MenuItem>
             <MenuItem value="image">Image</MenuItem>
             <MenuItem value="video">Video</MenuItem>
+          </Select>
+        </FormControl>
+
+        <FormControl fullWidth size="small">
+          <InputLabel>Rating</InputLabel>
+          <Select
+            value={ratingFilter}
+            label="Rating"
+            onChange={(e) => onRatingFilterChange(e.target.value)}
+          >
+            <MenuItem value="all">All Ratings</MenuItem>
+            <MenuItem value={5}>
+              <StarRating rating={5} readonly size="small" />
+            </MenuItem>
+            <MenuItem value={4}>
+              <StarRating rating={4} readonly size="small" /> +
+            </MenuItem>
+            <MenuItem value={3}>
+              <StarRating rating={3} readonly size="small" /> +
+            </MenuItem>
+            <MenuItem value={2}>
+              <StarRating rating={2} readonly size="small" /> +
+            </MenuItem>
+            <MenuItem value={1}>
+              <StarRating rating={1} readonly size="small" /> +
+            </MenuItem>
+            <MenuItem value={0}>Unrated</MenuItem>
           </Select>
         </FormControl>
 
@@ -182,11 +212,18 @@ const Sidebar = ({
                     WebkitBoxOrient: 'vertical',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
-                    lineHeight: 1.3
+                    lineHeight: 1.3,
+                    mb: 1
                   }}
                 >
                   {getPromptPreview(prompt.prompt)}
                 </Typography>
+
+                <StarRating 
+                  rating={prompt.rating || 0} 
+                  readonly 
+                  size="small" 
+                />
                 
                 {prompt.tags && prompt.tags.length > 0 && (
                   <Box sx={{ mt: 1 }}>

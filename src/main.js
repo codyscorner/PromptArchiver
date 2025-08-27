@@ -221,7 +221,8 @@ ipcMain.handle('save-prompt', async (event, promptData) => {
       modelName: modelName || '',
       modelType: modelType || '',
       baseModel: baseModel || '',
-      hasNegativePrompt: !!(negativePrompt && negativePrompt.trim())
+      hasNegativePrompt: !!(negativePrompt && negativePrompt.trim()),
+      rating: 0
     };
     await fs.writeFile(path.join(promptFolder, 'metadata.json'), JSON.stringify(metadata, null, 2));
     
@@ -291,7 +292,8 @@ ipcMain.handle('load-prompts', async (event, archivePath) => {
                 modelName: metadata.modelName || '',
                 modelType: metadata.modelType || '',
                 baseModel: metadata.baseModel || '',
-                hasNegativePrompt: metadata.hasNegativePrompt || !!negativePrompt
+                hasNegativePrompt: metadata.hasNegativePrompt || !!negativePrompt,
+                rating: metadata.rating || 0
               });
             } catch (error) {
               console.error(`Error reading prompt folder ${folder}:`, error);
@@ -554,6 +556,27 @@ ipcMain.handle('replace-prompt-files', async (event, { promptPath, newFiles }) =
     return { success: true, message: 'Files replaced successfully' };
   } catch (error) {
     console.error('Error replacing prompt files:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('update-prompt-rating', async (event, { promptPath, rating }) => {
+  try {
+    // Update metadata with rating
+    const metadataPath = path.join(promptPath, 'metadata.json');
+    const existingMetadata = JSON.parse(await fs.readFile(metadataPath, 'utf8'));
+    
+    const updatedMetadata = {
+      ...existingMetadata,
+      rating: rating,
+      lastModified: new Date().toISOString()
+    };
+    
+    await fs.writeFile(metadataPath, JSON.stringify(updatedMetadata, null, 2));
+    
+    return { success: true, message: 'Rating updated successfully' };
+  } catch (error) {
+    console.error('Error updating rating:', error);
     return { success: false, error: error.message };
   }
 });
