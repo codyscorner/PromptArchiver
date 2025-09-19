@@ -70,6 +70,7 @@ function App() {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(prompt => 
         prompt.prompt.toLowerCase().includes(term) ||
+        (prompt.title && prompt.title.toLowerCase().includes(term)) ||
         prompt.tags.some(tag => tag.toLowerCase().includes(term))
       );
     }

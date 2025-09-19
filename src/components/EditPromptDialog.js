@@ -24,6 +24,7 @@ import {
 } from '@mui/icons-material';
 
 const EditPromptDialog = ({ open, onClose, onSave, prompt: selectedPrompt }) => {
+  const [title, setTitle] = useState('');
   const [prompt, setPrompt] = useState('');
   const [tags, setTags] = useState([]);
   const [tagInput, setTagInput] = useState('');
@@ -38,6 +39,7 @@ const EditPromptDialog = ({ open, onClose, onSave, prompt: selectedPrompt }) => 
 
   useEffect(() => {
     if (selectedPrompt) {
+      setTitle(selectedPrompt.title || '');
       setPrompt(selectedPrompt.prompt || '');
       setTags(selectedPrompt.tags || []);
       setAiSource(selectedPrompt.aiSource || '');
@@ -99,6 +101,7 @@ const EditPromptDialog = ({ open, onClose, onSave, prompt: selectedPrompt }) => 
     
     try {
       const promptData = {
+        title: title.trim(),
         prompt: prompt.trim(),
         tags,
         aiSource: aiSource.trim(),
@@ -146,6 +149,16 @@ const EditPromptDialog = ({ open, onClose, onSave, prompt: selectedPrompt }) => 
             </Typography>
             <Divider />
           </Box>
+
+          <TextField
+            label="Title"
+            fullWidth
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Enter a title for your prompt (max 40 characters)"
+            inputProps={{ maxLength: 40 }}
+            helperText={`${title.length}/40 characters`}
+          />
 
           <TextField
             label="Prompt"

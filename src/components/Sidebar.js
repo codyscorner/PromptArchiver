@@ -44,6 +44,13 @@ const Sidebar = ({
     return prompt.length > 100 ? prompt.substring(0, 100) + '...' : prompt;
   };
 
+  const getPromptTitle = (prompt) => {
+    if (prompt.title && prompt.title.trim()) {
+      return prompt.title.length > 40 ? prompt.title.substring(0, 40) + '...' : prompt.title;
+    }
+    return prompt.prompt.length > 40 ? prompt.prompt.substring(0, 40) + '...' : prompt.prompt;
+  };
+
   const handleExportToggle = (promptId) => {
     const newSelected = new Set(selectedForExport);
     if (newSelected.has(promptId)) {
@@ -204,6 +211,19 @@ const Sidebar = ({
                   </Typography>
                 </Box>
                 
+                <Typography
+                  variant="subtitle2"
+                  sx={{
+                    fontWeight: 'bold',
+                    mb: 0.5,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  {getPromptTitle(prompt)}
+                </Typography>
+
                 <Typography
                   variant="body2"
                   sx={{

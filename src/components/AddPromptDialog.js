@@ -26,6 +26,7 @@ import {
 } from '@mui/icons-material';
 
 const AddPromptDialog = ({ open, onClose, onSave }) => {
+  const [title, setTitle] = useState('');
   const [prompt, setPrompt] = useState('');
   const [type, setType] = useState('text');
   const [tags, setTags] = useState([]);
@@ -46,6 +47,7 @@ const AddPromptDialog = ({ open, onClose, onSave }) => {
   };
 
   const resetForm = () => {
+    setTitle('');
     setPrompt('');
     setType('text');
     setTags([]);
@@ -96,6 +98,7 @@ const AddPromptDialog = ({ open, onClose, onSave }) => {
     
     try {
       const promptData = {
+        title: title.trim(),
         prompt: prompt.trim(),
         type,
         tags,
@@ -126,6 +129,16 @@ const AddPromptDialog = ({ open, onClose, onSave }) => {
       
       <DialogContent>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 1 }}>
+          <TextField
+            label="Title"
+            fullWidth
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Enter a title for your prompt (max 40 characters)"
+            inputProps={{ maxLength: 40 }}
+            helperText={`${title.length}/40 characters`}
+          />
+
           <TextField
             label="Prompt"
             multiline

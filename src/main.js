@@ -185,6 +185,7 @@ ipcMain.handle('ensure-archive-structure', async (event, archivePath) => {
 ipcMain.handle('save-prompt', async (event, promptData) => {
   try {
     const { 
+      title,
       prompt, 
       type, 
       tags, 
@@ -215,6 +216,7 @@ ipcMain.handle('save-prompt', async (event, promptData) => {
     const metadata = {
       timestamp: new Date().toISOString(),
       type,
+      title: title || '',
       tags: tags || [],
       folderName,
       aiSource: aiSource || '',
@@ -288,6 +290,7 @@ ipcMain.handle('load-prompts', async (event, archivePath) => {
                 outputFiles,
                 path: folderPath,
                 // Ensure backward compatibility with old prompts
+                title: metadata.title || '',
                 aiSource: metadata.aiSource || '',
                 modelName: metadata.modelName || '',
                 modelType: metadata.modelType || '',
@@ -461,6 +464,7 @@ ipcMain.handle('change-prompt-type', async (event, { promptPath, newType, archiv
 ipcMain.handle('update-prompt', async (event, { promptPath, promptData }) => {
   try {
     const { 
+      title,
       prompt, 
       tags, 
       aiSource,
@@ -492,6 +496,7 @@ ipcMain.handle('update-prompt', async (event, { promptPath, promptData }) => {
     
     const updatedMetadata = {
       ...existingMetadata,
+      title: title || '',
       tags: tags || [],
       aiSource: aiSource || '',
       modelName: modelName || '',

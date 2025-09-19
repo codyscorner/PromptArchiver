@@ -211,6 +211,14 @@ const ContentArea = ({ selectedPrompt, archivePath, onPromptUpdated, showSnackba
               </IconButton>
             </Box>
 
+            {selectedPrompt.title && (
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="h5" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+                  {selectedPrompt.title}
+                </Typography>
+              </Box>
+            )}
+
             <Box sx={{ mb: 2 }}>
               <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
                 Rating:
