@@ -38,6 +38,7 @@ const AddPromptDialog = ({ open, onClose, onSave }) => {
   const [modelType, setModelType] = useState('');
   const [baseModel, setBaseModel] = useState('');
   const [negativePrompt, setNegativePrompt] = useState('');
+  const [isDragging, setIsDragging] = useState(false);
 
   const handleClose = () => {
     if (!saving) {
@@ -87,6 +88,38 @@ const AddPromptDialog = ({ open, onClose, onSave }) => {
 
   const handleRemoveFile = (index) => {
     setSelectedFiles(selectedFiles.filter((_, i) => i !== index));
+  };
+
+  const handleDragEnter = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Only set dragging to false if we're leaving the drop zone entirely
+    if (e.currentTarget === e.target) {
+      setIsDragging(false);
+    }
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      const filePaths = files.map(file => file.path);
+      setSelectedFiles(prevFiles => [...prevFiles, ...filePaths]);
+    }
   };
 
   const handleSave = async () => {
@@ -252,31 +285,50 @@ const AddPromptDialog = ({ open, onClose, onSave }) => {
               </Button>
             </Box>
 
-            {selectedFiles.length > 0 ? (
-              <List dense>
-                {selectedFiles.map((filePath, index) => (
-                  <ListItem key={index} divider>
-                    <ListItemText
-                      primary={getFileName(filePath)}
-                      secondary={filePath}
-                    />
-                    <ListItemSecondaryAction>
-                      <IconButton
-                        edge="end"
-                        onClick={() => handleRemoveFile(index)}
-                        size="small"
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </ListItemSecondaryAction>
-                  </ListItem>
-                ))}
-              </List>
-            ) : (
-              <Alert severity="info">
-                No output files selected. You can add them later or leave empty for text-only prompts.
-              </Alert>
-            )}
+            <Box
+              onDragEnter={handleDragEnter}
+              onDragLeave={handleDragLeave}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+              sx={{
+                border: isDragging ? '2px dashed #1976d2' : '2px dashed #ccc',
+                borderRadius: 2,
+                backgroundColor: isDragging ? 'rgba(25, 118, 210, 0.05)' : 'transparent',
+                transition: 'all 0.2s ease',
+                minHeight: selectedFiles.length > 0 ? 'auto' : '100px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center'
+              }}
+            >
+              {selectedFiles.length > 0 ? (
+                <List dense>
+                  {selectedFiles.map((filePath, index) => (
+                    <ListItem key={index} divider>
+                      <ListItemText
+                        primary={getFileName(filePath)}
+                        secondary={filePath}
+                      />
+                      <ListItemSecondaryAction>
+                        <IconButton
+                          edge="end"
+                          onClick={() => handleRemoveFile(index)}
+                          size="small"
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </ListItemSecondaryAction>
+                    </ListItem>
+                  ))}
+                </List>
+              ) : (
+                <Alert severity="info" sx={{ m: 2 }}>
+                  {isDragging
+                    ? 'Drop files here...'
+                    : 'Drag & drop files here, or click "Select Files" button above'}
+                </Alert>
+              )}
+            </Box>
           </Box>
         </Box>
       </DialogContent>

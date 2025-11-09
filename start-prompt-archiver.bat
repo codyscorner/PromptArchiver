@@ -1,3 +1,3 @@
 @echo off
-cd /d "D:\AI\VideCoding\PromptArchiver"
+cd /d "P:\AI\VideCoding\PromptArchiver"
 npm run dev

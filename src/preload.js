@@ -15,5 +15,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   updatePrompt: (data) => ipcRenderer.invoke('update-prompt', data),
   deletePrompt: (promptPath) => ipcRenderer.invoke('delete-prompt', promptPath),
   replacePromptFiles: (data) => ipcRenderer.invoke('replace-prompt-files', data),
-  updatePromptRating: (data) => ipcRenderer.invoke('update-prompt-rating', data)
+  appendPromptFiles: (data) => ipcRenderer.invoke('append-prompt-files', data),
+  updatePromptRating: (data) => ipcRenderer.invoke('update-prompt-rating', data),
+  clonePrompt: (data) => ipcRenderer.invoke('clone-prompt', data)
 });

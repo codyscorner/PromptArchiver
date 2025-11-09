@@ -15,12 +15,14 @@ import {
   ListItem,
   ListItemText,
   ListItemSecondaryAction,
-  Alert
+  Alert,
+  ButtonGroup
 } from '@mui/material';
-import { 
+import {
   Delete as DeleteIcon,
   AttachFile as AttachFileIcon,
-  Refresh as RefreshIcon
+  Refresh as RefreshIcon,
+  Add as AddIcon
 } from '@mui/icons-material';
 
 const EditPromptDialog = ({ open, onClose, onSave, prompt: selectedPrompt }) => {
@@ -35,7 +37,10 @@ const EditPromptDialog = ({ open, onClose, onSave, prompt: selectedPrompt }) => 
   const [negativePrompt, setNegativePrompt] = useState('');
   const [saving, setSaving] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState([]);
+  const [filesToAdd, setFilesToAdd] = useState([]);
   const [currentOutputFiles, setCurrentOutputFiles] = useState([]);
+  const [fileMode, setFileMode] = useState('none'); // 'none', 'replace', 'add'
+  const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
     if (selectedPrompt) {
@@ -49,6 +54,8 @@ const EditPromptDialog = ({ open, onClose, onSave, prompt: selectedPrompt }) => 
       setNegativePrompt(selectedPrompt.negativePrompt || '');
       setCurrentOutputFiles(selectedPrompt.outputFiles || []);
       setSelectedFiles([]);
+      setFilesToAdd([]);
+      setFileMode('none');
       setTagInput('');
     }
   }, [selectedPrompt]);
@@ -73,23 +80,86 @@ const EditPromptDialog = ({ open, onClose, onSave, prompt: selectedPrompt }) => 
     setTags(tags.filter(tag => tag !== tagToRemove));
   };
 
-  const handleSelectFiles = async () => {
+  const handleSelectFilesToReplace = async () => {
     try {
       const filePaths = await window.electronAPI.selectFiles();
       if (filePaths && filePaths.length > 0) {
         setSelectedFiles(filePaths);
+        setFilesToAdd([]);
+        setFileMode('replace');
       }
     } catch (error) {
       console.error('Error selecting files:', error);
     }
   };
 
-  const handleRemoveFile = (index) => {
-    setSelectedFiles(selectedFiles.filter((_, i) => i !== index));
+  const handleSelectFilesToAdd = async () => {
+    try {
+      const filePaths = await window.electronAPI.selectFiles();
+      if (filePaths && filePaths.length > 0) {
+        setFilesToAdd(filePaths);
+        setSelectedFiles([]);
+        setFileMode('add');
+      }
+    } catch (error) {
+      console.error('Error selecting files:', error);
+    }
+  };
+
+  const handleRemoveReplaceFile = (index) => {
+    const newFiles = selectedFiles.filter((_, i) => i !== index);
+    setSelectedFiles(newFiles);
+    if (newFiles.length === 0) {
+      setFileMode('none');
+    }
+  };
+
+  const handleRemoveAddFile = (index) => {
+    const newFiles = filesToAdd.filter((_, i) => i !== index);
+    setFilesToAdd(newFiles);
+    if (newFiles.length === 0) {
+      setFileMode('none');
+    }
   };
 
   const getFileName = (filePath) => {
     return filePath.split('\\').pop().split('/').pop();
+  };
+
+  const handleDragEnter = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Only set dragging to false if we're leaving the drop zone entirely
+    if (e.currentTarget === e.target) {
+      setIsDragging(false);
+    }
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      const filePaths = files.map(file => file.path);
+
+      // Default behavior: add files (not replace)
+      setFilesToAdd(prevFiles => [...prevFiles, ...filePaths]);
+      setSelectedFiles([]);
+      setFileMode('add');
+    }
   };
 
   const handleSave = async () => {
@@ -98,7 +168,7 @@ const EditPromptDialog = ({ open, onClose, onSave, prompt: selectedPrompt }) => 
     }
 
     setSaving(true);
-    
+
     try {
       const promptData = {
         title: title.trim(),
@@ -112,20 +182,33 @@ const EditPromptDialog = ({ open, onClose, onSave, prompt: selectedPrompt }) => 
       };
 
       await onSave(promptData);
-      
-      // If files were selected, replace the output files
-      if (selectedFiles.length > 0) {
+
+      // Handle file operations based on mode
+      if (fileMode === 'replace' && selectedFiles.length > 0) {
         try {
           const result = await window.electronAPI.replacePromptFiles({
             promptPath: selectedPrompt.path,
             newFiles: selectedFiles
           });
-          
+
           if (!result.success) {
             console.error('Error replacing files:', result.error);
           }
         } catch (error) {
           console.error('Error replacing files:', error);
+        }
+      } else if (fileMode === 'add' && filesToAdd.length > 0) {
+        try {
+          const result = await window.electronAPI.appendPromptFiles({
+            promptPath: selectedPrompt.path,
+            newFiles: filesToAdd
+          });
+
+          if (!result.success) {
+            console.error('Error adding files:', result.error);
+          }
+        } catch (error) {
+          console.error('Error adding files:', error);
         }
       }
     } catch (error) {
@@ -250,66 +333,125 @@ const EditPromptDialog = ({ open, onClose, onSave, prompt: selectedPrompt }) => 
               <Typography variant="subtitle1" sx={{ flexGrow: 1 }}>
                 Output Files
               </Typography>
-              <Button
-                variant="outlined"
-                startIcon={<RefreshIcon />}
-                onClick={handleSelectFiles}
-                size="small"
-              >
-                Replace Files
-              </Button>
+              <ButtonGroup variant="outlined" size="small">
+                <Button
+                  startIcon={<AddIcon />}
+                  onClick={handleSelectFilesToAdd}
+                >
+                  Add More Files
+                </Button>
+                <Button
+                  startIcon={<RefreshIcon />}
+                  onClick={handleSelectFilesToReplace}
+                >
+                  Replace All Files
+                </Button>
+              </ButtonGroup>
             </Box>
 
-            {selectedFiles.length > 0 && (
-              <Box sx={{ mb: 2 }}>
-                <Alert severity="info" sx={{ mb: 2 }}>
-                  New files selected. These will replace all existing output files when you save.
-                </Alert>
-                <List dense>
-                  {selectedFiles.map((filePath, index) => (
-                    <ListItem key={index} divider>
-                      <ListItemText
-                        primary={getFileName(filePath)}
-                        secondary={filePath}
-                      />
-                      <ListItemSecondaryAction>
-                        <IconButton
-                          edge="end"
-                          onClick={() => handleRemoveFile(index)}
-                          size="small"
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      </ListItemSecondaryAction>
-                    </ListItem>
-                  ))}
-                </List>
-              </Box>
-            )}
-
-            {currentOutputFiles.length > 0 && selectedFiles.length === 0 && (
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                  Current files ({currentOutputFiles.length}):
-                </Typography>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                  {currentOutputFiles.map((file, index) => (
-                    <Chip
-                      key={index}
-                      label={file}
-                      size="small"
-                      variant="outlined"
-                    />
-                  ))}
+            <Box
+              onDragEnter={handleDragEnter}
+              onDragLeave={handleDragLeave}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+              sx={{
+                border: isDragging ? '2px dashed #1976d2' : '2px dashed #ccc',
+                borderRadius: 2,
+                backgroundColor: isDragging ? 'rgba(25, 118, 210, 0.05)' : 'transparent',
+                transition: 'all 0.2s ease',
+                minHeight: (fileMode === 'none' && currentOutputFiles.length === 0) ? '100px' : 'auto',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center'
+              }}
+            >
+              {fileMode === 'replace' && selectedFiles.length > 0 && (
+                <Box sx={{ p: 2 }}>
+                  <Alert severity="warning" sx={{ mb: 2 }}>
+                    New files selected. These will replace all existing output files when you save.
+                  </Alert>
+                  <List dense>
+                    {selectedFiles.map((filePath, index) => (
+                      <ListItem key={index} divider>
+                        <ListItemText
+                          primary={getFileName(filePath)}
+                          secondary={filePath}
+                        />
+                        <ListItemSecondaryAction>
+                          <IconButton
+                            edge="end"
+                            onClick={() => handleRemoveReplaceFile(index)}
+                            size="small"
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </ListItemSecondaryAction>
+                      </ListItem>
+                    ))}
+                  </List>
                 </Box>
-              </Box>
-            )}
+              )}
 
-            {currentOutputFiles.length === 0 && selectedFiles.length === 0 && (
-              <Alert severity="info">
-                No output files. Click "Replace Files" to add some.
-              </Alert>
-            )}
+              {fileMode === 'add' && filesToAdd.length > 0 && (
+                <Box sx={{ p: 2 }}>
+                  <Alert severity="info" sx={{ mb: 2 }}>
+                    {isDragging
+                      ? 'Drop files here to add more...'
+                      : 'These files will be added to your existing output files when you save.'}
+                  </Alert>
+                  <List dense>
+                    {filesToAdd.map((filePath, index) => (
+                      <ListItem key={index} divider>
+                        <ListItemText
+                          primary={getFileName(filePath)}
+                          secondary={filePath}
+                        />
+                        <ListItemSecondaryAction>
+                          <IconButton
+                            edge="end"
+                            onClick={() => handleRemoveAddFile(index)}
+                            size="small"
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </ListItemSecondaryAction>
+                      </ListItem>
+                    ))}
+                  </List>
+                </Box>
+              )}
+
+              {fileMode === 'none' && currentOutputFiles.length > 0 && (
+                <Box sx={{ p: 2 }}>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                    Current files ({currentOutputFiles.length}):
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1 }}>
+                    {currentOutputFiles.map((file, index) => (
+                      <Chip
+                        key={index}
+                        label={file}
+                        size="small"
+                        variant="outlined"
+                      />
+                    ))}
+                  </Box>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 2, textAlign: 'center' }}>
+                    {isDragging
+                      ? 'Drop files here to add more...'
+                      : 'Drag & drop files here to add more, or use buttons above'}
+                  </Typography>
+                </Box>
+              )}
+
+              {fileMode === 'none' && currentOutputFiles.length === 0 && (
+                <Alert severity="info" sx={{ m: 2 }}>
+                  {isDragging
+                    ? 'Drop files here...'
+                    : 'No output files. Drag & drop files here, or click "Add More Files" / "Replace All Files" buttons above'}
+                </Alert>
+              )}
+            </Box>
           </Box>
         </Box>
       </DialogContent>

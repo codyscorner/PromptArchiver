@@ -530,12 +530,12 @@ ipcMain.handle('replace-prompt-files', async (event, { promptPath, newFiles }) =
   try {
     // Get list of existing output files to remove
     const files = await fs.readdir(promptPath);
-    const existingOutputFiles = files.filter(f => 
-      f !== 'prompt.txt' && 
-      f !== 'metadata.json' && 
+    const existingOutputFiles = files.filter(f =>
+      f !== 'prompt.txt' &&
+      f !== 'metadata.json' &&
       f !== 'negative_prompt.txt'
     );
-    
+
     // Remove existing output files
     for (const file of existingOutputFiles) {
       try {
@@ -544,7 +544,7 @@ ipcMain.handle('replace-prompt-files', async (event, { promptPath, newFiles }) =
         console.error(`Error removing file ${file}:`, error);
       }
     }
-    
+
     // Copy new files
     if (newFiles && newFiles.length > 0) {
       for (const filePath of newFiles) {
@@ -557,10 +557,49 @@ ipcMain.handle('replace-prompt-files', async (event, { promptPath, newFiles }) =
         }
       }
     }
-    
+
     return { success: true, message: 'Files replaced successfully' };
   } catch (error) {
     console.error('Error replacing prompt files:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('append-prompt-files', async (event, { promptPath, newFiles }) => {
+  try {
+    // Copy new files without removing existing ones
+    if (newFiles && newFiles.length > 0) {
+      for (const filePath of newFiles) {
+        try {
+          const fileName = path.basename(filePath);
+          let destPath = path.join(promptPath, fileName);
+
+          // Check if file already exists and add a number suffix if needed
+          let counter = 1;
+          while (true) {
+            try {
+              await fs.access(destPath);
+              // File exists, try with a number suffix
+              const ext = path.extname(fileName);
+              const nameWithoutExt = path.basename(fileName, ext);
+              destPath = path.join(promptPath, `${nameWithoutExt}_${counter}${ext}`);
+              counter++;
+            } catch (error) {
+              // File doesn't exist, we can use this path
+              break;
+            }
+          }
+
+          await fs.copyFile(filePath, destPath);
+        } catch (fileError) {
+          console.error(`Error copying file ${filePath}:`, fileError);
+        }
+      }
+    }
+
+    return { success: true, message: 'Files added successfully' };
+  } catch (error) {
+    console.error('Error appending prompt files:', error);
     return { success: false, error: error.message };
   }
 });
@@ -570,18 +609,70 @@ ipcMain.handle('update-prompt-rating', async (event, { promptPath, rating }) => 
     // Update metadata with rating
     const metadataPath = path.join(promptPath, 'metadata.json');
     const existingMetadata = JSON.parse(await fs.readFile(metadataPath, 'utf8'));
-    
+
     const updatedMetadata = {
       ...existingMetadata,
       rating: rating,
       lastModified: new Date().toISOString()
     };
-    
+
     await fs.writeFile(metadataPath, JSON.stringify(updatedMetadata, null, 2));
-    
+
     return { success: true, message: 'Rating updated successfully' };
   } catch (error) {
     console.error('Error updating rating:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('clone-prompt', async (event, { promptPath, archivePath }) => {
+  try {
+    // Read the source prompt metadata
+    const metadataPath = path.join(promptPath, 'metadata.json');
+    const sourceMetadata = JSON.parse(await fs.readFile(metadataPath, 'utf8'));
+
+    // Create new timestamp and folder name for the clone
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const folderName = `prompt_${timestamp}`;
+    const typePath = path.join(archivePath, sourceMetadata.type);
+    const cloneFolder = path.join(typePath, folderName);
+
+    // Create the clone folder
+    await fs.mkdir(cloneFolder, { recursive: true });
+
+    // Read all files from source folder
+    const files = await fs.readdir(promptPath);
+
+    // Copy all files to the new folder
+    for (const file of files) {
+      const sourcePath = path.join(promptPath, file);
+      const destPath = path.join(cloneFolder, file);
+
+      const stat = await fs.stat(sourcePath);
+      if (stat.isFile()) {
+        await fs.copyFile(sourcePath, destPath);
+      }
+    }
+
+    // Update the metadata in the clone with new timestamp and folder name
+    const cloneMetadataPath = path.join(cloneFolder, 'metadata.json');
+    const cloneMetadata = {
+      ...sourceMetadata,
+      timestamp: new Date().toISOString(),
+      folderName: folderName,
+      clonedFrom: sourceMetadata.folderName,
+      rating: 0 // Reset rating for the clone
+    };
+
+    await fs.writeFile(cloneMetadataPath, JSON.stringify(cloneMetadata, null, 2));
+
+    return {
+      success: true,
+      message: 'Prompt cloned successfully',
+      newPath: cloneFolder
+    };
+  } catch (error) {
+    console.error('Error cloning prompt:', error);
     return { success: false, error: error.message };
   }
 });

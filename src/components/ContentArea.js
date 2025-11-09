@@ -20,7 +20,14 @@ import {
   Select,
   Alert
 } from '@mui/material';
-import { MoreVert as MoreVertIcon, Edit as EditIcon, EditNote as EditNoteIcon, Delete as DeleteIcon, ContentCopy as ContentCopyIcon } from '@mui/icons-material';
+import {
+  MoreVert as MoreVertIcon,
+  Edit as EditIcon,
+  EditNote as EditNoteIcon,
+  Delete as DeleteIcon,
+  ContentCopy as ContentCopyIcon,
+  FileCopy as FileCopyIcon
+} from '@mui/icons-material';
 import MediaViewer from './MediaViewer';
 import EditPromptDialog from './EditPromptDialog';
 import StarRating from './StarRating';
@@ -173,6 +180,25 @@ const ContentArea = ({ selectedPrompt, archivePath, onPromptUpdated, showSnackba
     } catch (error) {
       showSnackbar('Error updating rating: ' + error.message, 'error');
     }
+  };
+
+  const handleClonePrompt = async () => {
+    try {
+      const result = await window.electronAPI.clonePrompt({
+        promptPath: selectedPrompt.path,
+        archivePath
+      });
+
+      if (result.success) {
+        showSnackbar('Prompt cloned successfully!', 'success');
+        onPromptUpdated(); // Refresh the prompt list to show the new clone
+      } else {
+        showSnackbar('Error cloning prompt: ' + result.error, 'error');
+      }
+    } catch (error) {
+      showSnackbar('Error cloning prompt: ' + error.message, 'error');
+    }
+    setMenuAnchor(null);
   };
 
   if (!selectedPrompt) {
@@ -396,6 +422,10 @@ const ContentArea = ({ selectedPrompt, archivePath, onPromptUpdated, showSnackba
           <MenuItem onClick={handleEditClick}>
             <EditNoteIcon sx={{ mr: 1 }} />
             Edit Prompt
+          </MenuItem>
+          <MenuItem onClick={handleClonePrompt}>
+            <FileCopyIcon sx={{ mr: 1 }} />
+            Clone Prompt
           </MenuItem>
           <MenuItem onClick={handleChangeTypeClick}>
             <EditIcon sx={{ mr: 1 }} />
